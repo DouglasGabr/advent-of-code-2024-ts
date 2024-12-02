@@ -48,7 +48,7 @@ type AdvanceResult =
 /**
  * @returns new direction
  */
-function step(a: number, b: number, direction: number): number | null {
+function step(a: number, b: number, direction: number): number {
   const ab = a - b;
   const dir = Math.sign(ab);
   if (
@@ -56,7 +56,7 @@ function step(a: number, b: number, direction: number): number | null {
     Math.abs(ab) < 1 ||
     (direction != 0 && dir != direction)
   ) {
-    return null;
+    throw new Error("Invalid step");
   }
   return dir;
 }
@@ -70,56 +70,39 @@ function advance(
   skipped: boolean,
   canSkipA: boolean,
 ): AdvanceResult {
-  const dirAb = step(a, b, direction);
-  if (dirAb != null) {
-    if (c == null) {
-      return { valid: true, skip: null, direction: dirAb };
-    }
-    const dirBc = step(b, c, dirAb);
-    if (dirBc != null) {
-      return { valid: true, skip: null, direction: dirBc };
-    } else {
-      if (d == null) {
-        if (skipped) {
-          return { valid: false };
-        } else {
-          return { valid: true, skip: "c", direction: dirAb };
-        }
-      }
-      const dirBd = step(b, d, dirAb);
-      if (dirBd != null) {
-        return { valid: true, skip: "c", direction: dirBd };
-      }
-    }
-  }
-  if (c == null) {
-    if (!skipped) {
-      return { valid: true, skip: "b", direction };
-    } else {
-      return { valid: false };
-    }
-  } else {
-    const dirAc = step(a, c, direction);
-    if (dirAc != null) {
-      if (d == null) {
-        return { valid: true, skip: "b", direction: dirAc };
-      }
-      const dirCd = step(c, d, dirAc);
-      if (dirCd != null) {
-        return { valid: true, skip: "b", direction: dirCd };
-      }
-    }
-  }
+  const paths: {
+    path: [number, number | undefined, number | undefined];
+    skipped: null | "a" | "b" | "c";
+  }[] = [
+    { path: [a, b, c], skipped: null },
+    { path: [a, b, d], skipped: "c" },
+    { path: [a, c, d], skipped: "b" },
+  ];
   if (canSkipA) {
-    const dirBc = step(b, c, direction);
-    if (dirBc != null) {
-      if (d == null) {
-        return { valid: true, skip: "a", direction: dirBc };
+    paths.push({ path: [b, c, d], skipped: "a" });
+  }
+  for (const pathOption of paths) {
+    const [a, b, c] = pathOption.path;
+    if (b == null) {
+      return { valid: true, skip: pathOption.skipped, direction };
+    }
+    try {
+      const newDirection = step(a, b, direction);
+      if (c == null) {
+        return {
+          valid: true,
+          skip: pathOption.skipped,
+          direction: newDirection,
+        };
       }
-      const dirCd = step(c, d, dirBc);
-      if (dirCd != null) {
-        return { valid: true, skip: "a", direction: dirCd };
-      }
+      const newDirection2 = step(b, c, newDirection);
+      return {
+        valid: true,
+        skip: pathOption.skipped,
+        direction: newDirection2,
+      };
+    } catch {
+      continue;
     }
   }
   return { valid: false };
@@ -137,7 +120,6 @@ export function part2(input: string): number {
       }),
     )
     .map((levels) => {
-      
       assert(levels.length > 0);
       let direction = 0;
       let skipped = false;
@@ -149,7 +131,7 @@ export function part2(input: string): number {
         const c = levels[cIndex];
         const d = levels[i + 3];
         const result = advance(a, b, c, d, direction, skipped, i === 0);
-        
+
         if (!result.valid) {
           return false;
         }
@@ -178,6 +160,6 @@ export function part2(input: string): number {
 
 if (isMain(import.meta)) {
   const input = readFileSync("inputs/day2.txt", "utf8");
-  
-  
+  console.log("part 1:", part1(input));
+  console.log("part 2:", part2(input));
 }

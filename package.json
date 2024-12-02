@@ -1,0 +1,25 @@
+{
+  "name": "advent-of-code-2024-ts",
+  "version": "1.0.0",
+  "description": "Advent of code 2024",
+  "type": "module",
+  "scripts": {
+    "run": "node --experimental-strip-types",
+    "test": "node --test --experimental-strip-types src/**/*.spec.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/DouglasGabr/advent-of-code-2024-ts.git"
+  },
+  "author": "Douglas Francisco Gabriel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DouglasGabr/advent-of-code-2024-ts/issues"
+  },
+  "homepage": "https://github.com/DouglasGabr/advent-of-code-2024-ts#readme",
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "prettier": "^3.4.1",
+    "typescript": "^5.7.2"
+  }
+}

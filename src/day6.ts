@@ -81,7 +81,6 @@ class LabMap {
   width: number;
   height: number;
   visited: Map<PositionString, Set<Direction>>;
-  placed: Position | null = null;
   constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
@@ -123,31 +122,6 @@ class LabMap {
     );
   }
 
-  toString(): string {
-    let result = "";
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const position = new Position(x, y);
-        if (this.guard.position.equals(position)) {
-          result += this.guard.direction;
-        } else if (this.visited.has(position.toString())) {
-          const directions = this.visited.get(position.toString())!;
-          if (directions.size === 1) {
-            result += Array.from(directions)[0];
-          } else {
-            result += "+";
-          }
-        } else if (this.obstacles.has(position.toString())) {
-          result += this.placed?.equals(position) ? "O" : "#";
-        } else {
-          result += ".";
-        }
-      }
-      result += "\n";
-    }
-    return result;
-  }
-
   static fromInput(input: string): LabMap {
     const rows = input.split("\n");
     const height = rows.length;
@@ -185,9 +159,6 @@ class LabMap {
     const map = new LabMap(this.width, this.height);
     map.guard = new Guard(this.guard.position, this.guard.direction);
     map.obstacles = new Set(this.obstacles);
-    map.visited = new Map(
-      this.visited.entries().map(([k, v]) => [k, new Set(v)] as const),
-    );
     return map;
   }
 }
@@ -199,23 +170,26 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  const map = LabMap.fromInput(input);
-  let loopPossibilities = 0;
-  while (map.step() === "inside") {
-    const copy = map.copy();
-    const placed = copy.guard.position.add(copy.guard.direction);
-    copy.obstacles.add(placed.toString());
-    copy.placed = placed;
-    let copyResult = copy.step();
-    while (copyResult === "inside") {
-      copyResult = copy.step();
+  const initialMap = LabMap.fromInput(input);
+  const map = initialMap.copy();
+  while (map.step() === "inside") {}
+  const visited = map.visited;
+  let looped = 0;
+  for (const positionVisited of visited.keys()) {
+    if (positionVisited === initialMap.guard.position.toString()) {
+      continue;
     }
-    if (copyResult === "loop") {
-      console.log(copy.toString());
-      loopPossibilities++;
+    const clone = initialMap.copy();
+    clone.obstacles.add(positionVisited);
+    let result = clone.step();
+    while (result === "inside") {
+      result = clone.step();
+    }
+    if (result === "loop") {
+      looped++;
     }
   }
-  return loopPossibilities;
+  return looped;
 }
 
 if (isMain(import.meta)) {

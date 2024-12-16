@@ -195,37 +195,47 @@ export function part2(input: string): number {
   let sum = 0;
   for (const [type, regions] of regionsByType.entries()) {
     for (const region of regions) {
-      console.log("region", type, region);
       const area = region.size;
-      const topRight = region.values().reduce(
-        (acc, val) => {
-          const position = Position.fromString(val);
-          return position.max(acc);
-        },
-        new Position(-Infinity, Infinity),
-      );
-      console.log("topRight", topRight.toString());
       let sides = 0;
-      const leftDirection = new Position(-1, 0);
-      let direction = new Position(-1, 0);
-      let caret = new Position(topRight.x, topRight.y);
-      do {
-        // console.log("caret", caret.toString());
-        // console.log("direction", direction.toString());
-        const forward = caret.add(direction);
-        const right = caret.add(direction.rotateRight());
-        if (region.has(right.toString())) {
-          direction = direction.rotateRight();
-          sides++;
-          caret = right;
-        } else if (region.has(forward.toString())) {
-          caret = forward;
-        } else {
-          direction = direction.rotateLeft();
-          sides++;
+      for (const positionString of region) {
+        const position = Position.fromString(positionString);
+        const neighbors = [
+          new Position(position.x + 1, position.y),
+          new Position(position.x, position.y - 1),
+          new Position(position.x - 1, position.y),
+          new Position(position.x, position.y + 1),
+        ];
+        const corners = [
+          {
+            neighbors: neighbors.slice(0, 2),
+            diagonal: new Position(position.x + 1, position.y - 1),
+          },
+          {
+            neighbors: neighbors.slice(1, 3),
+            diagonal: new Position(position.x - 1, position.y - 1),
+          },
+          {
+            neighbors: neighbors.slice(2, 4),
+            diagonal: new Position(position.x - 1, position.y + 1),
+          },
+          {
+            neighbors: [neighbors[3], neighbors[0]],
+            diagonal: new Position(position.x + 1, position.y + 1),
+          },
+        ];
+        for (const { neighbors, diagonal } of corners) {
+          const [a, b] = neighbors;
+          if (!region.has(a.toString()) && !region.has(b.toString())) {
+            sides++;
+          } else if (
+            region.has(a.toString()) &&
+            region.has(b.toString()) &&
+            !region.has(diagonal.toString())
+          ) {
+            sides++;
+          }
         }
-      } while (!(caret.equals(topRight) && leftDirection.equals(direction)));
-      console.log("sides", sides);
+      }
       sum += area * sides;
     }
   }
